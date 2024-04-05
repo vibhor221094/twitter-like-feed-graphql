@@ -4,7 +4,7 @@ using twitter_feed_server.Queries;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContextFactory<TwitterDbContext>(options =>
+builder.Services.AddDbContext<TwitterDbContext>(options =>
 {
     var folder = Environment.SpecialFolder.LocalApplicationData;
     var path = Environment.GetFolderPath(folder);
@@ -15,6 +15,7 @@ builder.Services.AddDbContextFactory<TwitterDbContext>(options =>
 
 builder.Services.AddGraphQLServer()
     .AddQueryType<Query>()
+    .AddProjections()
     .RegisterDbContext<TwitterDbContext>();
 
 builder.Services.AddCors(options =>

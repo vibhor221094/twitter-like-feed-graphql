@@ -5,8 +5,7 @@ namespace twitter_feed_server.Queries
 {
     public class Query
     {
-        [UseDbContext(typeof(TwitterDbContext))]
-        [UsePaging(DefaultPageSize = 5)]
+        [UsePaging(DefaultPageSize = 5), UseProjection]
         public IQueryable<Tweet> GetTweets(TwitterDbContext twitterDbContext)
         {
             return twitterDbContext.Tweets;
