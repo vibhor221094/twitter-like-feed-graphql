@@ -10,6 +10,14 @@ import { useQuery } from "@vue/apollo-composable"
 
 let tweets = ref([])
 
+const onScroll = (e) => {
+  const { scrollTop, clientHeight, scrollHeight } = e.target
+  if (Math.abs(scrollHeight - clientHeight - scrollTop) <= 1) {
+    console.log('reached bottom!')
+    loadMoreTweets()
+  }
+}
+
 const QUERY_TWEETS = gql`
 query {
       tweets {
@@ -35,13 +43,60 @@ query {
         }
 `
 
-const { result } = useQuery(QUERY_TWEETS)
+const { result, fetchMore } = useQuery(QUERY_TWEETS)
 tweets = computed(() => result.value?.tweets?.edges?.map(x => x.node) ?? [])
+
+const loadMoreTweets = () => {
+      const endCursor = result.value?.tweets?.pageInfo.endCursor;
+      fetchMore({
+        query: gql`
+        query getMoreTweets ($cursor: String) {
+          tweets (after: $cursor) {
+              edges {
+                  node {
+                      id,
+                      name,
+                      handle,
+                      tweetBody,
+                      comments,
+                      retweets,
+                      likes,
+                      analytics
+                  },
+                  cursor
+                },
+                pageInfo {
+                  endCursor
+                  hasNextPage
+                }
+              }
+            }
+        `,
+        variables: {
+          cursor: endCursor,
+        },
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          const newEdges = fetchMoreResult.tweets.edges
+          const pageInfo = fetchMoreResult.tweets.pageInfo
+          return newEdges.length ? {
+            ...previousResult,
+            tweets: {
+              ...previousResult.tweets,
+              edges: [
+                ...previousResult.tweets.edges,
+                ...newEdges,
+              ],
+              pageInfo,
+            },
+          } : previousResult
+        },
+      })
+    }
 
 </script>
 
 <template>
-  <div class="bg-black fixed w-full h-screen no-scrollbar overflow-auto">
+  <div class="bg-black fixed w-full h-screen no-scrollbar overflow-auto" @scroll="onScroll">
       <div class="md:w-1/2 w-[400px] h-[lvh] max-w-[500px] md:mx-auto">
         <div class="p-2 mb-4">
           <Twitter fillColor="#FFFFFF" :size="40" />
